@@ -1,3 +1,4 @@
+
 # CardioGuard AI: Clinical Decision Support & Risk Stratification Dashboard
 
 **CardioGuard AI** is a production-ready, full-stack Artificial Intelligence Engineer mini-project designed for the healthcare domain. It showcases how to combine **Machine Learning (Scikit-Learn)**, **Explainable AI (XAI)**, and **Clinical Decision Support (CDSS)** into an interactive, clinician-facing web application.
@@ -118,3 +119,4 @@ This project is an exceptional portfolio builder because it addresses key real-w
 2. **Clinical Decision Support System (CDSS)**: Implements automated medical logic translating model weights and inputs into customized, patient-specific guidelines (consistent with AHA/ACC guidelines).
 3. **Resilient Offline Architecture**: Leverages fallback logic (fetch error handling) to keep client-side apps fully operational even when server connections are severed, a vital standard in critical hospital systems.
 4. **Clean Code & Modularity**: Demonstrates separation of concerns across dataset generation, modular ML training, REST API architecture, and a modern frontend SPA.
+
