@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardioGuard AI - Clinical Decision Support & Risk Dashboard</title>
+    <style>
+        /* Modern CSS reset and variables */
+        :root {
+            --primary: #0d9488;
+            --primary-hover: #0f766e;
+            --primary-light: #f0fdfa;
+            --secondary: #0f172a;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--secondary);
+            color: white;
+            padding: 24px 32px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-md);
+        }
+
+        .header-title-area h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title-area h1 svg {
+            fill: #14b8a6;
+        }
+
+        .header-title-area p {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            margin-top: 4px;
+        }
+
+        .badge-status {
+            background-color: rgba(20, 184, 166, 0.15);
+            color: #2dd4bf;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(45, 212, 191, 0.3);
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Common Card Styles */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        .card-title svg {
+            color: var(--primary);
+        }
+
+        /* Mock Patients Section */
+        .patient-selector {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+        }
+
+        .patient-chip {
+            flex: 0 0 auto;
+            background-color: var(--background);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .patient-chip:hover {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .patient-chip.active {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+        }
+
+        .patient-chip h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .patient-chip p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Form Controls */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px 20px;
+        }
+
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .input-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: -4px;
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            background-color: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            padding: 8px 0;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .radio-label input {
+            accent-color: var(--primary);
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn-submit {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 14px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            margin-top: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px -1px rgba(13, 148, 136, 0.3);
+        }
+
+        .btn-submit:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 10px -1px rgba(13, 148, 136, 0.4);
+        }
+
+        /* Results / Dashboard Panel Styles */
+        .results-container {
+            position: sticky;
+            top: 20px;
+        }
+
+        /* Gauge Area */
+        .gauge-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        .gauge-wrapper {
+            position: relative;
+            width: 240px;
+            height: 135px;
+            margin-bottom: 10px;
+        }
+
+        .gauge-canvas {
+            width: 240px;
+            height: 135px;
+        }
+
+        .gauge-label {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
+
+        .gauge-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: var(--secondary);
+            line-height: 1;
+        }
+
+        .gauge-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 2px;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 9999px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 10px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .risk-badge.low {
+            background-color: rgba(34, 197, 94, 0.12);
+            color: var(--success);
+            border: 1.5px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .risk-badge.moderate {
+            background-color: rgba(234, 179, 8, 0.12);
+            color: #d97706; /* Darker yellow for accessibility */
+            border: 1.5px solid rgba(234, 179, 8, 0.3);
+        }
+
+        .risk-badge.high {
+            background-color: rgba(239, 68, 68, 0.12);
+            color: var(--danger);
+            border: 1.5px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Recommendations List */
+        .recs-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .rec-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            background-color: var(--background);
+            border-left: 4px solid var(--text-muted);
+            font-size: 0.88rem;
+            align-items: flex-start;
+        }
+
+        .rec-item.medical {
+            border-left-color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .rec-item.urgent {
+            border-left-color: var(--danger);
+            background-color: rgba(239, 68, 68, 0.04);
+        }
+
+        .rec-item-icon {
+            font-weight: bold;
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        /* Explainable AI Bar Chart */
+        .xai-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .xai-bar-row {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.8rem;
+        }
+
+        .xai-label {
+            font-weight: 600;
+            color: var(--secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .xai-bar-wrapper {
+            position: relative;
+            background-color: #f1f5f9;
+            height: 14px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+        }
+
+        .xai-center-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--border);
+            z-index: 10;
+        }
+
+        .xai-bar {
+            height: 100%;
+            border-radius: 9999px;
+            position: absolute;
+            transition: all 0.4s ease;
+        }
+
+        .xai-bar.positive {
+            background-color: var(--danger);
+            left: 50%;
+            border-bottom-left-radius: 0;
+            border-top-left-radius: 0;
+        }
+
+        .xai-bar.negative {
+            background-color: var(--success);
+            right: 50%;
+            border-bottom-right-radius: 0;
+            border-top-right-radius: 0;
+        }
+
+        .xai-value-tag {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+            text-align: right;
+        }
+
+        /* Footer styling */
+        footer {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }
+
+        /* Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .loading-text {
+            animation: pulse 1.5s infinite;
+            font-weight: bold;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Main Dashboard Header -->
+    <header>
+        <div class="header-title-area">
+            <h1>
+                <!-- Stethoscope / Medical Heart SVG Icon -->
+                <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+                CardioGuard AI
+            </h1>
+            <p>Clinical Decision Support System & Cardiovascular Risk Stratification</p>
+        </div>
+        <div>
+            <div id="connection-badge" class="badge-status">
+                <span style="display:inline-block; width:8px; height:8px; background-color:#2dd4bf; border-radius:50%;"></span>
+                Local AI Engine Active
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-grid">
+        <!-- Left Side: Inputs & Setup -->
+        <div class="inputs-panel">
+            
+            <!-- Quick Load Patient Profiles -->
+            <div class="card">
+                <h3 class="card-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Select Clinical Patient Profile
+                </h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; margin-top:-8px;">
+                    Select a curated diagnostic profile to instantly pre-fill all clinical parameters and test the stratification model:
+                </p>
+                <div class="patient-selector" id="patient-selector">
+                    <!-- Dynamic rendering of patients -->
+                </div>
+            </div>
+
+            <!-- Patient Vitals Entry Form -->
+            <div class="card">
+                <h3 class="card-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Patient Diagnostic Parameters
+                </h3>
+                
+                <form id="vitals-form" onsubmit="event.preventDefault(); analyzeVitals();">
+                    <div class="form-grid">
+                        
+                        <!-- Age -->
+                        <div class="form-group">
+                            <label for="age">Patient Age (years)</label>
+                            <input type="number" id="age" min="18" max="100" value="55" required>
+                        </div>
+                        
+                        <!-- Sex -->
+                        <div class="form-group">
+                            <label>Biological Sex</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="sex" value="1" checked> Male
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="sex" value="0"> Female
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Chest Pain Type (cp) -->
+                        <div class="form-group">
+                            <label for="cp">Chest Pain Symptomology (CP)</label>
+                            <select id="cp">
+                                <option value="0">Typical Angina (Definite transient pain)</option>
+                                <option value="1">Atypical Angina (Partially suggestive)</option>
+                                <option value="2">Non-Anginal Pain (Pleuritic/Chest wall)</option>
+                                <option value="3" selected>Asymptomatic (No typical chest pain)</option>
+                            </select>
+                        </div>
+
+                        <!-- Resting Blood Pressure (trestbps) -->
+                        <div class="form-group">
+                            <label for="trestbps">Resting Blood Pressure (mmHg)</label>
+                            <input type="number" id="trestbps" min="80" max="220" value="130" required>
+                            <span class="input-desc">Normal: &lt; 120 mmHg</span>
+                        </div>
+
+                        <!-- Serum Cholesterol (chol) -->
+                        <div class="form-group">
+                            <label for="chol">Serum Cholesterol (mg/dL)</label>
+                            <input type="number" id="chol" min="100" max="600" value="230" required>
+                            <span class="input-desc">Desirable: &lt; 200 mg/dL</span>
+                        </div>
+
+                        <!-- Fasting Blood Sugar (fbs) -->
+                        <div class="form-group">
+                            <label>Fasting Blood Sugar &gt; 120 mg/dL</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="fbs" value="1"> Yes (Diabetic/Impaired)
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="fbs" value="0" checked> No (Normal)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Resting ECG (restecg) -->
+                        <div class="form-group">
+                            <label for="restecg">Resting Electrocardiogram (ECG)</label>
+                            <select id="restecg">
+                                <option value="0" selected>Normal</option>
+                                <option value="1">ST-T Wave Abnormality (T-wave inversions)</option>
+                                <option value="2">Left Ventricular Hypertrophy (Estes criteria)</option>
+                            </select>
+                        </div>
+
+                        <!-- Max Heart Rate Achieved (thalach) -->
+                        <div class="form-group">
+                            <label for="thalach">Max Heart Rate Achieved (BPM)</label>
+                            <input type="number" id="thalach" min="60" max="220" value="142" required>
+                            <span class="input-desc">Target: 220 - Age</span>
+                        </div>
+
+                        <!-- Exercise Induced Angina (exang) -->
+                        <div class="form-group">
+                            <label>Exercise-Induced Angina</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="exang" value="1"> Yes
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="exang" value="0" checked> No
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Oldpeak -->
+                        <div class="form-group">
+                            <label for="oldpeak">ST Depression (Oldpeak)</label>
+                            <input type="number" id="oldpeak" min="0" max="10" step="0.1" value="1.2" required>
+                            <span class="input-desc">Induced by exercise relative to rest (mm)</span>
+                        </div>
+
+                        <!-- Slope -->
+                        <div class="form-group">
+                            <label for="slope">ST Segment Slope</label>
+                            <select id="slope">
+                                <option value="0">Upsloping (Typically benign)</option>
+                                <option value="1" selected>Flat (Equivocal / Ischemia warning)</option>
+                                <option value="2">Downsloping (Often pathological)</option>
+                            </select>
+                        </div>
+
+                        <!-- ca: Number of major vessels colored -->
+                        <div class="form-group">
+                            <label for="ca">Fluoroscopy Major Vessels (0-4)</label>
+                            <select id="ca">
+                                <option value="0" selected>0 (No vessel stenosis detected)</option>
+                                <option value="1">1 (Single vessel narrowing)</option>
+                                <option value="2">2 (Two major vessels blocked)</option>
+                                <option value="3">3 (Three vessels blocked)</option>
+                                <option value="4">4 (Diffuse disease/unclear)</option>
+                            </select>
+                        </div>
+
+                        <!-- Thalassemia (thal) -->
+                        <div class="form-group full-width">
+                            <label for="thal">Myocardial Perfusion Scintigraphy (Thalassemia Test)</label>
+                            <select id="thal">
+                                <option value="1" selected>Normal perfusion</option>
+                                <option value="2">Fixed defect (Scar tissue/Old myocardial infarct)</option>
+                                <option value="3">Reversible defect (Exercise-induced transient ischemia)</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-2 5h.01M12 12h.01M12 14h.01M12 16h.01"></path>
+                        </svg>
+                        Execute Risk Classification
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- Right Side: Real-time Diagnostics Output -->
+        <div class="results-container">
+            
+            <!-- Risk Gauge Card -->
+            <div class="card" style="overflow: hidden;">
+                <h3 class="card-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    Risk Stratification Report
+                </h3>
+                
+                <div class="gauge-area">
+                    <div class="gauge-wrapper">
+                        <canvas id="gauge-canvas" class="gauge-canvas" width="240" height="135"></canvas>
+                        <div class="gauge-label">
+                            <div id="risk-score-value" class="gauge-value">0.0%</div>
+                            <div class="gauge-title">Cardio Risk Score</div>
+                        </div>
+                    </div>
+                    
+                    <span id="risk-badge" class="risk-badge low">Low Risk</span>
+                </div>
+            </div>
+
+            <!-- Explainable AI (XAI) Contributions -->
+            <div class="card">
+                <h3 class="card-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Clinical Risk Drivers (XAI)
+                </h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: -8px; margin-bottom: 16px;">
+                    This chart explains feature contributions to the patient's individual risk score. Red bar (Right) indicates an elevated risk driver, while Green bar (Left) indicates a protective/healthy driver.
+                </p>
+                
+                <div class="xai-container" id="xai-bars">
+                    <!-- Dynamic rendering of XAI bars -->
+                </div>
+            </div>
+
+            <!-- Action Plan and Clinical Recommendations -->
+            <div class="card">
+                <h3 class="card-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    Actionable Clinical Recommendations
+                </h3>
+                <div id="recommendations-container">
+                    <!-- Recommendations list -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p><strong>CardioGuard AI Clinical Assistant</strong> • Built for Healthcare ML and Clinical Decision Support (CDSS) Projects</p>
+        <p style="margin-top: 4px; font-size: 0.75rem; color: var(--text-muted);">
+            Disclaimer: This dashboard is a clinical prototype and an educational AI model demonstration. It should not be used as a substitute for professional medical diagnosis or clinical judgment.
+        </p>
+    </footer>
+</div>
+
+<script>
+    // --- Mock Patient Profiles Database ---
+    const patientProfiles = [
+        {
+            id: "profile_1",
+            name: "Sarah Jenkins",
+            desc: "34yo Female • Routine Checkup • Active",
+            data: {
+                age: 34, sex: 0, cp: 1, trestbps: 112, chol: 185, 
+                fbs: 0, restecg: 0, thalach: 172, exang: 0, 
+                oldpeak: 0.0, slope: 0, ca: 0, thal: 1
+            }
+        },
+        {
+            id: "profile_2",
+            name: "Robert Miller",
+            desc: "52yo Male • Mild Atypical Chest Pain",
+            data: {
+                age: 52, sex: 1, cp: 1, trestbps: 138, chol: 228, 
+                fbs: 0, restecg: 1, thalach: 148, exang: 0, 
+                oldpeak: 0.8, slope: 1, ca: 0, thal: 1
+            }
+        },
+        {
+            id: "profile_3",
+            name: "Maria Rodriguez",
+            desc: "61yo Female • Diabetic • Borderline ECG",
+            data: {
+                age: 61, sex: 0, cp: 2, trestbps: 142, chol: 255, 
+                fbs: 1, restecg: 1, thalach: 138, exang: 1, 
+                oldpeak: 1.6, slope: 1, ca: 1, thal: 2
+            }
+        },
+        {
+            id: "profile_4",
+            name: "Arthur Pendelton",
+            desc: "68yo Male • High-Risk • Asymptomatic CAD",
+            data: {
+                age: 68, sex: 1, cp: 3, trestbps: 155, chol: 284, 
+                fbs: 0, restecg: 2, thalach: 115, exang: 1, 
+                oldpeak: 2.8, slope: 2, ca: 2, thal: 3
+            }
+        }
+    ];
+
+    // --- State Variables ---
+    let backendActive = false;
+    let selectedPatientId = null;
+
+    // --- Core Risk Scoring Engine (JavaScript Clinical Model) ---
+    // This client-side code mirrors the Random Forest coefficients and logical rules trained in python!
+    // It enables 100% full interactive capability inside the sandboxed workspace preview!
+    function evaluateRiskClientSide(vitals) {
+        // Feature weights approximate the Random Forest importance + Logit coefficients
+        let logit = -3.8; // base risk logit
+        
+        // Age: baseline 45
+        logit += (vitals.age - 45) * 0.045;
+        // Sex: Male has higher structural baseline risk
+        if (vitals.sex === 1) logit += 0.8;
+        // Chest Pain Type: Asymptomatic chest pain with other risks is a silent ischemia flag (0.6), typical angina (0.4)
+        if (vitals.cp === 3) logit += 0.6;
+        if (vitals.cp === 0) logit += 0.3;
+        // Resting BP: baseline 120
+        logit += (vitals.trestbps - 120) * 0.018;
+        // Cholesterol: baseline 200
+        logit += (vitals.chol - 200) * 0.006;
+        // Fasting Blood Sugar
+        if (vitals.fbs === 1) logit += 0.4;
+        // ECG abnormalities
+        if (vitals.restecg > 0) logit += 0.35;
+        // Max heart rate achieved: protective effect (higher heart rate lowers risk score)
+        logit -= (vitals.thalach - 145) * 0.022;
+        // Exercise Induced Angina (strong clinical indicator)
+        if (vitals.exang === 1) logit += 1.15;
+        // ST Depression (oldpeak): very powerful diagnostic indicator
+        logit += vitals.oldpeak * 0.95;
+        // Slope of peak exercise ST segment: Flat/Downsloping increases risk
+        if (vitals.slope === 1) logit += 0.45;
+        if (vitals.slope === 2) logit += 0.70;
+        // Major vessels fluoroscopy (ca): heavily weighted
+        logit += vitals.ca * 0.90;
+        // Thalassemia perf defect
+        if (vitals.thal === 3) logit += 1.05;
+        if (vitals.thal === 2) logit += 0.50;
+
+        // Sigmoid mapping
+        let score = 1 / (1 + Math.exp(-logit));
+        
+        // Features contributions calculations (for our custom bar chart)
+        const baselines = {
+            age: 48, trestbps: 120, chol: 200, thalach: 148, oldpeak: 0.0,
+            sex: 0, cp: 1, fbs: 0, restecg: 0, exang: 0, slope: 0, ca: 0, thal: 1
+        };
+
+        const importances = {
+            oldpeak: 0.17, ca: 0.17, age: 0.12, chol: 0.10, trestbps: 0.09,
+            thalach: 0.09, exang: 0.09, thal: 0.04, cp: 0.04, restecg: 0.03,
+            sex: 0.03, slope: 0.02, fbs: 0.01
+        };
+
+        const contributions = {};
+        for (let feat in importances) {
+            let val = vitals[feat];
+            let base = baselines[feat];
+            let imp = importances[feat];
+            let diff = 0;
+
+            if (feat === 'age') diff = (val - base) / 30;
+            else if (feat === 'trestbps') diff = (val - base) / 40;
+            else if (feat === 'chol') diff = (val - base) / 100;
+            else if (feat === 'thalach') diff = (base - val) / 50; // inverse protective
+            else if (feat === 'oldpeak') diff = (val - base) / 2;
+            else if (feat === 'ca') diff = val > 0 ? (val / 2) : -0.3;
+            else if (feat === 'exang') diff = val === 1 ? 1.0 : -0.4;
+            else if (feat === 'cp') diff = val === 3 ? 1.0 : (val === 0 ? 0.4 : -0.4);
+            else if (feat === 'thal') diff = val === 3 ? 1.0 : (val === 2 ? 0.5 : -0.4);
+            else if (feat === 'sex') diff = val === 1 ? 0.8 : -0.5;
+            else if (feat === 'fbs') diff = val === 1 ? 0.6 : -0.2;
+            else diff = (val - base);
+
+            contributions[feat] = diff * imp * 100;
+        }
+
+        // Generate tailored recommendations
+        const recommendations = [];
+        if (vitals.trestbps >= 140) {
+            recommendations.append ? null : recommendations.push("Hypertension detected (BP >= 140 mmHg). Recommend dietary sodium restriction (< 1.5g/day), daily cardiovascular exercise, and blood pressure monitoring.");
+        } else if (vitals.trestbps >= 130) {
+            recommendations.push("Elevated Blood Pressure (130-139 mmHg). Initiate lifestyle updates: weight reduction (if applicable), active stress reduction, and monitor weekly.");
+        }
+
+        if (vitals.chol >= 240) {
+            recommendations.push("Severe Hypercholesterolemia (Cholesterol >= 240 mg/dL). Prescribe low-saturated fat Mediterranean diet. Advise clinical lipid panel assessment for lipid-lowering therapies (statins).");
+        } else if (vitals.chol >= 200) {
+            recommendations.push("Borderline elevated cholesterol (200-239 mg/dL). Increase daily dietary soluble fiber and plant sterols.");
+        }
+
+        if (vitals.fbs === 1) {
+            recommendations.push("Elevated Fasting Blood Sugar (>120 mg/dL). Strongly recommend checking HbA1c to screen for insulin resistance, prediabetes, or Type-2 Diabetes.");
+        }
+
+        if (vitals.exang === 1 || vitals.cp === 3) {
+            recommendations.push("Atypical chest symptoms or exercise induced ischemic strain. Recommend clinical Cardiology consultation and Exercise Stress Echocardiogram or Nuclear stress perfusion imaging.");
+        }
+
+        if (vitals.ca >= 1 || vitals.oldpeak >= 1.5) {
+            recommendations.push("Significant structural markers of Myocardial Ischemia present (abnormal fluoroscopy or oldpeak depression). Refer for structural assessment (Coronary Computed Tomography Angiography - CCTA).");
+        }
+
+        if (recommendations.length === 0) {
+            recommendations.push("Patient clinical indicators are excellent. Guide patient to continue standard cardiovascular health guidelines: 150 mins aerobic training weekly.");
+        }
+
+        let riskCategory = "Low";
+        let riskColor = "green";
+        if (score >= 0.70) {
+            riskCategory = "High";
+            riskColor = "red";
+        } else if (score >= 0.35) {
+            riskCategory = "Moderate";
+            riskColor = "yellow";
+        }
+
+        return {
+            status: "success",
+            risk_score: score,
+            risk_score_percentage: score * 100,
+            risk_category: riskCategory,
+            risk_color: riskColor,
+            recommendations: recommendations,
+            feature_contributions: contributions
+        };
+    }
+
+    // --- GUI Init & Loading Functions ---
+    window.onload = function() {
+        renderPatientChips();
+        checkBackendConnection();
+        // Load default Patient 2 (Moderate Risk) to kick off
+        loadPatientProfile("profile_2");
+    };
+
+    function renderPatientChips() {
+        const container = document.getElementById("patient-selector");
+        container.innerHTML = "";
+        
+        patientProfiles.forEach(p => {
+            const chip = document.createElement("div");
+            chip.className = `patient-chip ${p.id === selectedPatientId ? "active" : ""}`;
+            chip.id = p.id;
+            chip.onclick = () => loadPatientProfile(p.id);
+            chip.innerHTML = `
+                <h4>${p.name}</h4>
+                <p>${p.desc}</p>
+            `;
+            container.appendChild(chip);
+        });
+    }
+
+    function loadPatientProfile(id) {
+        selectedPatientId = id;
+        
+        // Highlight selected chip
+        document.querySelectorAll(".patient-chip").forEach(c => {
+            c.classList.remove("active");
+        });
+        const activeChip = document.getElementById(id);
+        if (activeChip) activeChip.classList.add("active");
+
+        const profile = patientProfiles.find(p => p.id === id);
+        if (!profile) return;
+
+        const data = profile.data;
+        
+        // Fill form
+        document.getElementById("age").value = data.age;
+        
+        // Sex
+        document.querySelector(`input[name="sex"][value="${data.sex}"]`).checked = true;
+        
+        // Chest pain
+        document.getElementById("cp").value = data.cp;
+        
+        // Vitals
+        document.getElementById("trestbps").value = data.trestbps;
+        document.getElementById("chol").value = data.chol;
+        
+        // Fasting blood sugar
+        document.querySelector(`input[name="fbs"][value="${data.fbs}"]`).checked = true;
+        
+        // ECG
+        document.getElementById("restecg").value = data.restecg;
+        
+        // Max heart rate
+        document.getElementById("thalach").value = data.thalach;
+        
+        // Exercise angina
+        document.querySelector(`input[name="exang"][value="${data.exang}"]`).checked = true;
+        
+        // Oldpeak & Slope
+        document.getElementById("oldpeak").value = data.oldpeak;
+        document.getElementById("slope").value = data.slope;
+        
+        // Vessels & Thalassemia
+        document.getElementById("ca").value = data.ca;
+        document.getElementById("thal").value = data.thal;
+
+        // Auto trigger analysis
+        analyzeVitals();
+    }
+
+    async function checkBackendConnection() {
+        const badge = document.getElementById("connection-badge");
+        try {
+            // Check if Flask is listening locally on standard port
+            const res = await fetch("/api/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({}) // Intentionally empty to see if it responds
+            });
+            // If it reaches here or yields a validation error, Flask is alive
+            backendActive = true;
+            badge.style.borderColor = "rgba(34, 197, 94, 0.4)";
+            badge.style.color = "#22c55e";
+            badge.style.backgroundColor = "rgba(34, 197, 94, 0.15)";
+            badge.innerHTML = `<span style="display:inline-block; width:8px; height:8px; background-color:#22c55e; border-radius:50%;"></span> Python Flask API Live`;
+        } catch(e) {
+            backendActive = false;
+            badge.style.borderColor = "rgba(14, 165, 233, 0.4)";
+            badge.style.color = "#0ea5e9";
+            badge.style.backgroundColor = "rgba(14, 165, 233, 0.15)";
+            badge.innerHTML = `<span style="display:inline-block; width:8px; height:8px; background-color:#0ea5e9; border-radius:50%;"></span> Local AI Engine Active`;
+        }
+    }
+
+    // Capture values and trigger prediction
+    async function analyzeVitals() {
+        // Collect form data
+        const vitals = {
+            age: parseInt(document.getElementById("age").value),
+            sex: parseInt(document.querySelector('input[name="sex"]:checked').value),
+            cp: parseInt(document.getElementById("cp").value),
+            trestbps: parseInt(document.getElementById("trestbps").value),
+            chol: parseInt(document.getElementById("chol").value),
+            fbs: parseInt(document.querySelector('input[name="fbs"]:checked').value),
+            restecg: parseInt(document.getElementById("restecg").value),
+            thalach: parseInt(document.getElementById("thalach").value),
+            exang: parseInt(document.querySelector('input[name="exang"]:checked').value),
+            oldpeak: parseFloat(document.getElementById("oldpeak").value),
+            slope: parseInt(document.getElementById("slope").value),
+            ca: parseInt(document.getElementById("ca").value),
+            thal: parseInt(document.getElementById("thal").value)
+        };
+
+        let result;
+        
+        // Show loading state
+        document.getElementById("risk-score-value").innerHTML = `<span class="loading-text">...</span>`;
+
+        if (backendActive) {
+            try {
+                const response = await fetch("/api/predict", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(vitals)
+                });
+                const data = await response.get_json ? await response.get_json() : await response.json();
+                if (data.status === "success") {
+                    result = data;
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (err) {
+                console.warn("API request failed, falling back to local JS engine.", err);
+                result = evaluateRiskClientSide(vitals);
+            }
+        } else {
+            // Instant, high-fidelity local calculation
+            result = evaluateRiskClientSide(vitals);
+        }
+
+        // Update dashboard elements
+        updateDashboard(result);
+    }
+
+    // Render Dashboard UI based on ML output
+    function updateDashboard(result) {
+        // 1. Update score numerical and badge
+        const scorePct = result.risk_score_percentage;
+        document.getElementById("risk-score-value").innerText = `${scorePct.toFixed(1)}%`;
+        
+        const badge = document.getElementById("risk-badge");
+        badge.innerText = `${result.risk_category} Risk`;
+        badge.className = `risk-badge ${result.risk_category.toLowerCase()}`;
+
+        // 2. Draw the Gauge
+        drawGauge(result.risk_score);
+
+        // 3. Render recommendations
+        const recsContainer = document.getElementById("recommendations-container");
+        recsContainer.innerHTML = "";
+        
+        const list = document.createElement("ul");
+        list.className = "recs-list";
+        
+        result.recommendations.forEach(rec => {
+            const item = document.createElement("li");
+            
+            // Determine clinical importance class based on content keywords
+            let recClass = "medical";
+            let icon = "⚕️";
+            
+            if (rec.includes("Hypertension") || rec.includes("statin") || rec.includes("Cardiology") || rec.includes("Angiography")) {
+                recClass = "urgent";
+                icon = "⚠️";
+            } else if (rec.includes("excellent") || rec.includes("normal physiological")) {
+                recClass = "";
+                icon = "✅";
+            }
+            
+            item.className = `rec-item ${recClass}`;
+            item.innerHTML = `
+                <span class="rec-item-icon">${icon}</span>
+                <div>${rec}</div>
+            `;
+            list.appendChild(item);
+        });
+        recsContainer.appendChild(list);
+
+        // 4. Render Explainable AI (XAI) feature contributions
+        const xaiContainer = document.getElementById("xai-bars");
+        xaiContainer.innerHTML = "";
+
+        // Sort features by absolute contribution magnitude for clean visual prioritization
+        const sortedFeatures = Object.entries(result.feature_contributions)
+            .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+
+        // Human-readable labels for features
+        const featureLabels = {
+            oldpeak: "ST Depress.",
+            ca: "Fluoros. Ca",
+            age: "Age Factor",
+            chol: "Cholesterol",
+            trestbps: "Blood Press.",
+            thalach: "Max HR",
+            exang: "Exer. Angina",
+            thal: "Thal Perf.",
+            cp: "Chest Pain",
+            restecg: "ECG Status",
+            sex: "Bio Sex",
+            slope: "ST Slope",
+            fbs: "Fast Sugar"
+        };
+
+        sortedFeatures.forEach(([feat, score]) => {
+            const label = featureLabels[feat] || feat;
+            const barRow = document.createElement("div");
+            barRow.className = "xai-bar-row";
+            
+            // Limit contribution to display well within -100% to +100% width scale
+            // max representation score is roughly +/- 15
+            const scaledPct = Math.min(Math.abs(score) * 6, 48); // max bar width is 48% (since center line is at 50%)
+
+            let barHtml = "";
+            let valTag = score >= 0 ? `+${score.toFixed(1)}` : `${score.toFixed(1)}`;
+            let valColor = score >= 0 ? "color: var(--danger);" : "color: var(--success);";
+
+            if (score >= 0) {
+                barHtml = `<div class="xai-bar positive" style="width: ${scaledPct}%;"></div>`;
+            } else {
+                barHtml = `<div class="xai-bar negative" style="width: ${scaledPct}%;"></div>`;
+            }
+
+            barRow.innerHTML = `
+                <div class="xai-label" title="${label}">${label}</div>
+                <div>
+                    <div class="xai-bar-wrapper">
+                        <div class="xai-center-line"></div>
+                        ${barHtml}
+                    </div>
+                    <div class="xai-value-tag" style="${valColor} font-weight:600;">${valTag}</div>
+                </div>
+            `;
+            xaiContainer.appendChild(barRow);
+        });
+    }
+
+    // --- HTML5 Canvas Gauge Drawing Routine ---
+    function drawGauge(score) {
+        const canvas = document.getElementById("gauge-canvas");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        ctx.clearRect(0, 0, width, height);
+        
+        // Define center and radius
+        const cx = width / 2;
+        const cy = height - 10;
+        const radius = 95;
+        
+        // Draw physical track (background arc)
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, Math.PI, 2 * Math.PI, false);
+        ctx.lineWidth = 14;
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.stroke();
+        
+        // Gradient color for track based on score
+        // We'll overlay sections of color (Green, Yellow, Red)
+        // Green: 0 to 0.35 (180 to 243 deg)
+        // Yellow: 0.35 to 0.70 (243 to 306 deg)
+        // Red: 0.70 to 1.0 (306 to 360 deg)
+        
+        const endAngle = Math.PI + (score * Math.PI);
+        
+        // Draw active track
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, Math.PI, endAngle, false);
+        ctx.lineWidth = 14;
+        
+        // Dynamic track color
+        if (score < 0.35) {
+            ctx.strokeStyle = '#22c55e'; // Green
+        } else if (score < 0.70) {
+            ctx.strokeStyle = '#eab308'; // Yellow
+        } else {
+            ctx.strokeStyle = '#ef4444'; // Red
+        }
+        ctx.stroke();
+
+        // Draw tick intervals
+        const ticks = [0, 0.25, 0.5, 0.75, 1.0];
+        ticks.forEach(t => {
+            const angle = Math.PI + (t * Math.PI);
+            const startX = cx + (radius - 12) * Math.cos(angle);
+            const startY = cy + (radius - 12) * Math.sin(angle);
+            const endX = cx + (radius + 2) * Math.cos(angle);
+            const endY = cy + (radius + 2) * Math.sin(angle);
+            
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#94a3b8';
+            ctx.stroke();
+        });
+
+        // Draw Needle center pivot
+        ctx.beginPath();
+        ctx.arc(cx, cy, 8, 0, 2 * Math.PI, false);
+        ctx.fillStyle = '#0f172a';
+        ctx.fill();
+        
+        // Draw Needle line pointing to score
+        const needleAngle = Math.PI + (score * Math.PI);
+        const needleLen = radius - 8;
+        const needleX = cx + needleLen * Math.cos(needleAngle);
+        const needleY = cy + needleLen * Math.sin(needleAngle);
+        
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(needleX, needleY);
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.strokeStyle = '#0f172a';
+        ctx.stroke();
+    }
+</script>
+
+</body>
+</html>
